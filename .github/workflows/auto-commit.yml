@@ -1,30 +1,35 @@
-name: Auto Commit 3-4 Times Daily
+name: Auto Commit 5 Times Daily
 
 on:
   schedule:
-    - cron: '5 0 * * *'
-    - cron: '10 6 * * *'
-    - cron: '15 12 * * *'
-    - cron: '20 18 * * *'
+    - cron: '0 2 * * *'     # 02:00 UTC
+    - cron: '0 6 * * *'     # 06:00 UTC
+    - cron: '0 10 * * *'    # 10:00 UTC
+    - cron: '0 14 * * *'    # 14:00 UTC
+    - cron: '0 18 * * *'    # 18:00 UTC
   workflow_dispatch:
 
 jobs:
   auto-commit:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Make a dummy change
+      - name: Make dummy change to auto.txt
         run: |
-          echo "Updated on $(date)" >> auto.txt
+          echo "Auto commit at $(date -u)" >> auto.txt
 
       - name: Commit and push changes
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          git config --global user.email "sameerbaiju792@gmail.com"
           git config --global user.name "sameer266"
+          git config --global user.email "sameerbaiju792@gmail.com"
           git add auto.txt
-          git commit -m "Auto update on $(date)" || echo "No changes to commit"
-          git push https://x-access-token:${GH_PAT}@github.com/${{ github.repository }} HEAD:main
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "🤖 Auto commit: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            git push https://x-access-token:${GH_PAT}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
+          fi
